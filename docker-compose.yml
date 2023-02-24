@@ -1,0 +1,40 @@
+version: '3.8'
+
+volumes:
+  pg-data:
+
+services:
+  social-app:
+    restart: always
+    build: ./
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DB_PASSWORD=pusinu48
+
+  db:
+    restart: always
+    image: postgres:latest
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_DB: "db"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "pusinu48"
+      PGDATA: /pg-data
+    volumes:
+      - pg-data:/pg-data
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 4G

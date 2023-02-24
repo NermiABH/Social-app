@@ -1,0 +1,10 @@
+port: ":8000"
+log_level: "debug"
+
+db:
+  username: "postgres"
+  host: "db"
+  port: "5432"
+  dbname: "postgres"
+  password: "pusinu48"
+  sslmode: "disable"
