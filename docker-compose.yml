@@ -25,16 +25,4 @@ services:
       POSTGRES_PASSWORD: "pusinu48"
       PGDATA: /pg-data
     volumes:
-      - pg-data:/pg-data
-
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d db" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 4G
+      - pg-data:/var/lib/postgresql/data

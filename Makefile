@@ -8,5 +8,7 @@ rebuild:
 	docker-compose up -d --no-deps --build social-app
 stop:
 	docker-compose stop
+migrate:
+	migrate -path migrations -database 'postgres://postgres:pusinu48@:5436/postgres?sslmode=disable' up
 test:
 	go test -v ./...
