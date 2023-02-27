@@ -7,6 +7,7 @@ services:
   social-app:
     restart: always
     build: ./
+    command: ./wait-for-postgres.sh db ./social-app
     ports:
       - "8000:8000"
     depends_on:
@@ -20,8 +21,9 @@ services:
     ports:
       - "5436:5432"
     environment:
-      POSTGRES_DB: "db"
       POSTGRES_USER: "postgres"
+      DATABASE_HOST: "db"
+      POSTGRES_DB: "postgres"
       POSTGRES_PASSWORD: "pusinu48"
       PGDATA: /pg-data
     volumes:
