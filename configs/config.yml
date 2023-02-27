@@ -3,7 +3,7 @@ log_level: "debug"
 
 db:
   username: "postgres"
-  host: "localhost"
+  host: "db"
   port: "5432"
   dbname: "postgres"
   password: "pusinu48"
