@@ -12,3 +12,5 @@ migrate:
 	migrate -path migrations -database 'postgres://postgres:pusinu48@:5436/postgres?sslmode=disable' up
 test:
 	go test -v ./...
+start:
+	go build -o social-app ./cmd/main.go && ./social-app
