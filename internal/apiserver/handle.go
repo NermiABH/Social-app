@@ -13,6 +13,16 @@ var (
 	ErrorIncorectLoginOrPassword = errors.New("incorrect password or login")
 )
 
+func (s *Server) HandleUsersGet() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		users, err := s.store.User().GetUsers()
+		if err != nil {
+			s.error(w, r, http.StatusInternalServerError, err)
+		}
+		s.response(w, r, http.StatusOK, map[string][]model.User{"users": users})
+	}
+}
+
 func (s *Server) HandleUserCreate() http.HandlerFunc {
 	type request struct {
 		Username string `json:"username" validate:"required"`
@@ -72,8 +82,7 @@ func (s *Server) HandleUserLogin() http.HandlerFunc {
 			s.error(w, r, http.StatusNotFound, ErrorIncorectLoginOrPassword)
 			return
 		}
-		err = bcrypt.CompareHashAndPassword([]byte(u.EncryptedPassword), []byte(req.Password))
-		if err != nil {
+		if err = bcrypt.CompareHashAndPassword([]byte(u.EncryptedPassword), []byte(req.Password)); err != nil {
 			s.error(w, r, http.StatusNotFound, ErrorIncorectLoginOrPassword)
 			return
 		}
@@ -105,5 +114,38 @@ func (s *Server) HandleUserRecreateTokens() http.HandlerFunc {
 			return
 		}
 		s.response(w, r, http.StatusCreated, tokens)
+	}
+}
+
+func (s *Server) HandlePostCreate() http.HandlerFunc {
+	type request struct {
+		Text   string `json:"text" validate:"required_if=Object ''"`
+		Object string `json:"object" validate:"required_if=Text ''"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := r.Context().Value(ctxAuth).(*ctxAuthStruct)
+		if user.Err != nil {
+			s.error(w, r, http.StatusUnauthorized, user.Err)
+			return
+		}
+		req := &request{}
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+		if err := Validate(req); err != nil {
+			s.errorOfAny(w, r, http.StatusUnprocessableEntity, err)
+			return
+		}
+		p := &model.Post{
+			AuthorID: user.UserID,
+			Text:     req.Text,
+			Object:   req.Text,
+		}
+		if err := s.store.Post().CreatePost(p); err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, err)
+			return
+		}
+		s.response(w, r, http.StatusCreated, p)
 	}
 }

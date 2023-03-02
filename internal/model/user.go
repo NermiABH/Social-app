@@ -18,7 +18,6 @@ func (u *User) BeforeCreate() error {
 	u.EncryptedPassword = s
 	return nil
 }
-
 func (u *User) Sanitize() {
 	u.Password = ""
 	u.EncryptedPassword = ""
