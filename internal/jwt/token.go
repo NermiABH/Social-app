@@ -41,29 +41,29 @@ func Create(id int, lifeTime time.Duration) string {
 }
 
 // Verify checks the validity of the token.
-func Verify(token string) error {
+func Verify(token string) (*Payload, error) {
 	if token == "" {
-		return ErrorTokenIsEmpy
+		return &Payload{}, ErrorTokenIsEmpy
 	}
 	jwtParts := strings.Split(token, ".")
 	if len(jwtParts) != 3 {
-		return ErrorStructToken
+		return &Payload{}, ErrorStructToken
 	}
 	payload := &Payload{}
 	payloadJson, err := base64.RawURLEncoding.DecodeString(jwtParts[1])
 	if err != nil {
-		return ErrorTokenIsNotValid
+		return &Payload{}, ErrorTokenIsNotValid
 	}
 	if err = json.Unmarshal(payloadJson, payload); err != nil {
-		return ErrorTokenIsNotValid
+		return &Payload{}, ErrorTokenIsNotValid
 	}
 	if payload.Exp < time.Now().Format(time.DateTime) {
-		return ErrorTokenIsOutdated
+		return &Payload{}, ErrorTokenIsOutdated
 	}
 	if generateHmac256(jwtParts[0]+"."+jwtParts[1], SecretKey) != jwtParts[2] {
-		return ErrorTokenIsNotValid
+		return &Payload{}, ErrorTokenIsNotValid
 	}
-	return nil
+	return payload, nil
 }
 
 func generateHmac256(message, secret string) string {

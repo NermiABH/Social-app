@@ -1,15 +1,12 @@
 package jwt
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 )
 
 const (
-	AccessTime  = 15 * time.Minute
+	AccessTime  = time.Hour
 	RefreshTime = time.Hour * 24 * 180
 )
 
@@ -28,12 +25,10 @@ func (t *Tokens) CreateTokens(id int) {
 
 func (t *Tokens) RecreateTokens() error {
 	fmt.Print()
-	if err := Verify(t.Refresh); err != nil {
+	payload, err := Verify(t.Refresh)
+	if err != nil {
 		return err
 	}
-	payload := &Payload{}
-	data, _ := base64.RawURLEncoding.DecodeString(strings.TrimLeft(strings.TrimRight(t.Access, "."), "."))
-	json.Unmarshal(data, payload)
 	t.CreateTokens(payload.UserID)
 	return nil
 }
