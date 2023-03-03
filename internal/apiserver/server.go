@@ -6,15 +6,23 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/google/uuid"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	"net/http"
+	"reflect"
 	"strings"
+	"time"
 )
+
+const ctxKeyRequestID ctxKey = iota
 
 var (
 	ctxAuth *ctxAuthStruct
 )
 
+type ctxKey int8
 type ctxAuthStruct struct {
 	UserID int
 	Err    error
@@ -23,6 +31,7 @@ type ctxAuthStruct struct {
 type Server struct {
 	router *mux.Router
 	store  *store.Store
+	logger *logrus.Logger
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -33,19 +42,44 @@ func newServer(store *store.Store) *Server {
 	s := &Server{
 		router: mux.NewRouter(),
 		store:  store,
+		logger: logrus.New(),
 	}
 	s.configureRouter()
 	return s
 }
 
 func (s *Server) configureRouter() {
+	s.router.Use(s.setRequestID)
+	s.router.Use(s.logRequest)
+	s.router.Use(handlers.CORS(handlers.AllowedMethods([]string{"*"})))
 	s.router.Use(s.isAuth)
-	s.router.HandleFunc("/users", s.HandleUsersGet()).Methods("GET")
-	s.router.HandleFunc("/users", s.HandleUserCreate()).Methods("POST")
-	s.router.HandleFunc("/users/login", s.HandleUserLogin()).Methods("POST")
-	s.router.HandleFunc("/users/refresh", s.HandleUserRecreateTokens()).Methods("POST")
-	s.router.HandleFunc("/post", s.HandlePostCreate()).Methods("POST")
+	s.router.HandleFunc("/users", s.HandleUsersGet).Methods("GET")
+	s.router.HandleFunc("/users", s.HandleUserCreate).Methods("POST")
+	s.router.HandleFunc("/users/login", s.HandleUserLogin).Methods("POST")
+	s.router.HandleFunc("/users/refresh", s.HandleUserRecreateTokens).Methods("POST")
+	s.router.HandleFunc("/post", s.HandlePostCreate).Methods("POST")
 
+}
+
+func (s *Server) setRequestID(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := uuid.New().String()
+		w.Header().Set("X-Request-ID", id)
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxKeyRequestID, id)))
+	})
+}
+
+func (s *Server) logRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger := s.logger.WithFields(logrus.Fields{
+			"remote_add": r.RemoteAddr,
+			"request_id": r.Context().Value(ctxKeyRequestID),
+		})
+		logger.Infof("started %s %s", r.Method, r.RequestURI)
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		logrus.Infof("completed %s", time.Now().Sub(start))
+	})
 }
 
 func (s *Server) isAuth(next http.Handler) http.Handler {
@@ -73,9 +107,10 @@ func (s *Server) response(w http.ResponseWriter, r *http.Request, code int, data
 	}
 }
 
-func (s *Server) error(w http.ResponseWriter, r *http.Request, code int, err error) {
-	s.response(w, r, code, map[string]string{"errors": err.Error()})
-}
-func (s *Server) errorOfAny(w http.ResponseWriter, r *http.Request, code int, err any) {
+func (s *Server) error(w http.ResponseWriter, r *http.Request, code int, err any) {
+	if reflect.TypeOf(err).String() == "*errors.errorString" {
+		s.response(w, r, code, map[string]string{"errors": err.(error).Error()})
+		return
+	}
 	s.response(w, r, code, map[string]any{"errors": err})
 }
