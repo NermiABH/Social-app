@@ -114,3 +114,13 @@ func (s *Server) error(w http.ResponseWriter, r *http.Request, code int, err any
 	}
 	s.response(w, r, code, map[string]any{"errors": err})
 }
+
+func (s *Server) correctRequest(r *http.Request, request any) (int, any) {
+	if err := json.NewDecoder(r.Body).Decode(request); err != nil {
+		return http.StatusBadRequest, err
+	}
+	if err := Validate(request); err != nil {
+		return http.StatusUnprocessableEntity, err
+	}
+	return 0, nil
+}
