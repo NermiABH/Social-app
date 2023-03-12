@@ -16,13 +16,13 @@ func TestPostRepository_CreatePost(t *testing.T) {
 		Email:    "test@gmail.com",
 		Password: "pusinu48",
 	}
-	_ = s.User().CreateUser(u)
+	_ = s.User().Create(u)
 	p := &model.Post{
 		AuthorID: u.ID,
 		Object:   "Something url",
 		Text:     "Something text",
 	}
-	err := s.Post().CreatePost(p)
+	err := s.Post().Create(p)
 	assert.NoError(t, err)
 
 }
