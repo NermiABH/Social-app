@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	validate            = validator.New()
-	ErrorRequiredString = "must not be empty"
+	validate        = validator.New()
+	ErrorFieldEmpty = "must not be empty"
 )
 
 func init() {
@@ -26,8 +26,29 @@ func Validate(u any) map[string]string {
 	for _, fieldError := range validationError {
 		switch fieldError.Tag() {
 		case "required", "required_if":
-			apiError[fieldError.Field()] = ErrorRequiredString
+			apiError[fieldError.Field()] = ErrorFieldEmpty
 		}
 	}
 	return apiError
+}
+
+func (s *Server) ValidateUserCreateUpdate(username, email string) (map[string]string, error) {
+	vucu := make(map[string]string)
+	if username != "" {
+		exist, err := s.store.User().IsExistByUsername(username)
+		if err != nil {
+			return vucu, err
+		} else if exist {
+			vucu["username"] = "username is already exist"
+		}
+	}
+	if email != "" {
+		exist, err := s.store.User().IsExistByEmail(email)
+		if err != nil {
+			return vucu, err
+		} else if exist {
+			vucu["email"] = "email is already exist"
+		}
+	}
+	return vucu, nil
 }
