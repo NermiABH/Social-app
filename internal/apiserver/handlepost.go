@@ -62,7 +62,7 @@ func (s *Server) HandlePostCreate(w http.ResponseWriter, r *http.Request) {
 		s.error(w, r, http.StatusUnprocessableEntity, err)
 		return
 	}
-	s.response(w, r, http.StatusCreated, p)
+	s.response(w, r, http.StatusCreated, map[string]*model.Post{"post": p})
 }
 
 func (s *Server) HandlePostGet(w http.ResponseWriter, r *http.Request) {
@@ -78,7 +78,7 @@ func (s *Server) HandlePostGet(w http.ResponseWriter, r *http.Request) {
 		s.error(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	s.response(w, r, http.StatusOK, p)
+	s.response(w, r, http.StatusOK, map[string]*model.Post{"post": p})
 }
 
 func (s *Server) HandlePostUpdate(w http.ResponseWriter, r *http.Request) {

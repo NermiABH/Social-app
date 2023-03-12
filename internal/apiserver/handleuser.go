@@ -52,7 +52,7 @@ func (s *Server) HandleUserCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	u.Sanitize()
-	s.response(w, r, http.StatusCreated, u)
+	s.response(w, r, http.StatusCreated, map[string]*model.User{"user": u})
 }
 
 func (s *Server) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
@@ -111,7 +111,7 @@ func (s *Server) HandleUserGet(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.error(w, r, http.StatusInternalServerError, err)
 	}
-	s.response(w, r, http.StatusOK, u)
+	s.response(w, r, http.StatusOK, map[string]*model.User{"user": u})
 }
 
 func (s *Server) HandleUserUpdate(w http.ResponseWriter, r *http.Request) {
