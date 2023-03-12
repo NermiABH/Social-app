@@ -2,9 +2,9 @@ port: ":8000"
 log_level: "debug"
 
 db:
-  username: "postgres"
-  host: "db"
+  username: "nermiabh"
+  host: "dpg-cg6o0vg2qv28u2q3eplg-a"
   port: "5432"
-  dbname: "postgres"
-  password: "pusinu48"
+  dbname: "socialldb"
+  password: "lhj9BfPUGYzhyTAZYltEj37ZKQeOVu6C"
   sslmode: "disable"
