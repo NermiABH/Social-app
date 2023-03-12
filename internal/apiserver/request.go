@@ -16,7 +16,20 @@ type UserRecreateTokens struct {
 	Refresh string `json:"refresh" validate:"required"`
 }
 
-type PostCreate struct {
-	Text   string `json:"text" validate:"required_if=Object ''"`
-	Object string `json:"object" validate:"required_if=Text ''"`
+type UserUpdate struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Userpic  string `json:"userpic"`
+	Name     string `json:"name"`
+	Surname  string `json:"surname"`
+}
+
+type PostCreateUpdate struct {
+	Text   string `json:"text"`
+	Object string `json:"object"`
+}
+
+type CommentCreateUpdate struct {
+	ParentID *int   `json:"parent_id"`
+	Text     string `json:"text" validate:"required"`
 }
