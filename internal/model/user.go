@@ -20,8 +20,6 @@ type User struct {
 	IsSubscription     bool   `json:"is_subscription,omitempty"`
 	IsSubscriber       bool   `json:"is_subscriber,omitempty"`
 	IsOwn              bool   `json:"is_own,omitempty"`
-	IsLiked            bool   `json:"is_liked,omitempty"`
-	IsDisliked         bool   `json:"is_disliked,omitempty"`
 }
 
 func (u *User) BeforeCreate() error {

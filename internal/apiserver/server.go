@@ -79,7 +79,7 @@ func (s *Server) configureRouter() {
 	user.HandleFunc("", s.HandleUserUpdate).Methods("PATCH")
 	user.HandleFunc("", s.HandleUserDelete).Methods("DELETE")
 	user.HandleFunc("/subscribe", s.HandleUserSubscribe).Methods("POST")
-	user.HandleFunc("/unsubscribe", s.HandleUserUnSubscribe).Methods("POST")
+	user.HandleFunc("/subscribe", s.HandleUserUnSubscribe).Methods("DELETE")
 
 	role.HandleFunc("/posts", s.HandlePostsSeveralGet).Methods("GET")
 	role.HandleFunc("/posts", s.HandlePostCreate).Methods("POST")
@@ -91,11 +91,11 @@ func (s *Server) configureRouter() {
 	post.HandleFunc("", s.HandlePostDelete).Methods("DELETE")
 
 	post.HandleFunc("/like", s.HandlePostLike).Methods("POST")
-	post.HandleFunc("/unlike", s.HandlePostUnLike).Methods("DELETE")
+	post.HandleFunc("/like", s.HandlePostUnLike).Methods("DELETE")
 	post.HandleFunc("/dislike", s.HandlePostDislike).Methods("POST")
-	post.HandleFunc("/undislike", s.HandlePostUnDislike).Methods("DELETE")
+	post.HandleFunc("/dislike", s.HandlePostUnDislike).Methods("DELETE")
 	post.HandleFunc("/favorite", s.HandlePostFavorite).Methods("POST")
-	post.HandleFunc("/unfavorite", s.HandlePostUnFavorite).Methods("DELETE")
+	post.HandleFunc("/favorite", s.HandlePostUnFavorite).Methods("DELETE")
 
 	post.HandleFunc("/comments", s.HandleCommentsSeveralGet).Methods("GET")
 	post.HandleFunc("/comments", s.HandleCommentCreate).Methods("POST")
@@ -107,9 +107,9 @@ func (s *Server) configureRouter() {
 	comment.HandleFunc("", s.HandleCommentDelete).Methods("DELETE")
 
 	comment.HandleFunc("/like", s.HandleCommentLike).Methods("POST")
-	comment.HandleFunc("/unlike", s.HandleCommentUnLike).Methods("DELETE")
+	comment.HandleFunc("/like", s.HandleCommentUnLike).Methods("DELETE")
 	comment.HandleFunc("/dislike", s.HandleCommentDislike).Methods("POST")
-	comment.HandleFunc("/undislike", s.HandleCommentUnDislike).Methods("DELETE")
+	comment.HandleFunc("/dislike", s.HandleCommentUnDislike).Methods("DELETE")
 }
 
 func (s *Server) setRequestID(next http.Handler) http.Handler {

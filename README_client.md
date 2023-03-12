@@ -1,44 +1,48 @@
 # Social-app документация
 
-## Все urls:
-Любой url api части должен начинаться с :
+# <p id=content>Содержание</p>
+### <a href="#routes">Routes</a>
+### <a href="#response">Формат ответов</a>
 
-#### | api/admin  | 
+## <a href=#content id=routes>Routes</a>:
+Любой url api части должен начинаться с:
+#### | /api/admin  | 
 #### или 
-#### | api/public |
-
-
+#### | /api/public |
 Далее urls такие:
 
-|        №        | url                             | methods              |
-|:---------------:|:--------------------------------|:---------------------|
-|        1        | /users                          | GET / POST           |
-|        2        | /users/login                    | POST                 |
-|        3        | /users/refresh                  | POST                 |
-|        4        | /user/{id}                      | GET / PATCH / DELETE |
-|        5        | /user/id/subscribe              | POST / DELETE        |
-|        6        | /posts                          | GET / POST           |
-|        7        | /post/{id}                      | GET / POST / DELETE  |
-|        8        | /post/{id}/like                 | POST / DELETE        |
-|        9        | /post/{id}/favorite             | POST / DELETE        |
-|       10        | /post/{id}/comments             | GET / POST           |
-|       11        | /post/{id}/comment/id           | GET / POST / DELETE  |
-|       12        | /post/{id}/comment/{id}/like    | POST / DELETE        |
-|       13        | /post/{id}/comment/{id}/dislike | POST / DELETE        |
+|  <p id="№">№<p>   | url                             | methods              |
+|:-----------------:|:--------------------------------|:---------------------|
+| <a href="#1">1</a> | /users                          | GET / POST           |
+|         2         | /users/login                    | POST                 |
+|         3         | /users/refresh                  | POST                 |
+|         4         | /user/{id}                      | GET / PATCH / DELETE |
+|         5         | /user/id/subscribe              | POST / DELETE        |
+|         6         | /posts                          | GET / POST           |
+|         7         | /post/{id}                      | GET / POST / DELETE  |
+|         8         | /post/{id}/like                 | POST / DELETE        |
+|         9         | /post/{id}/dislike              | POST / DELETE        |
+|        10         | /post/{id}/favorite             | POST / DELETE        |
+|        11         | /post/{id}/comments             | GET / POST           |
+|        12         | /post/{id}/comment/id           | GET / POST / DELETE  |
+|        13         | /post/{id}/comment/{id}/like    | POST / DELETE        |
+|        14         | /post/{id}/comment/{id}/dislike | POST / DELETE        |
 
 
+<p id="1"></p>
 
-## Get Several User
+## <a href="#№">Get Several User</a>
 ```
 GET /users ?username=user ?offset=0 ?limit=10
 ```
 Происходит поиск по ?username и возвращает все совпадения.
-Если ?offset и ?limit некорректные, то , берется значение по умолчанию ?offset=0 и ?limit=10
+Если ?offset и ?limit некорректные, то, берется значение по умолчанию ?offset=0 и ?limit=10
 
 Обязательные теги: `username`
 
-Аутентификация не обязательна, возвращает Users
-## Create User
+Аутентификация не обязательна, возвращает <a href="#users">Users</a>
+
+## <a href="#№">Create User</a>
 ```
 POST /users
 ```
@@ -50,11 +54,11 @@ Request body:
     "password": "password"
 }
 ```
-Аутентификация не обязательна, возвращает Tokens
+Аутентификация не обязательна, возвращает <a href="#user">User</a>
 
 Обязательные поля: `username, email, password`
 
-## Login:
+## <a href="#№">Login</a>
 Авторизация на основе jwt
 ```
 POST /users/login
@@ -71,7 +75,7 @@ Request body:
 
 Обязательные поля: `username или email, password` 
 
-## Refresh:
+## <a href="#№">Refresh</a>
 Авторизация на основе jwt
 ```
 POST /users/refresh
@@ -86,13 +90,13 @@ Request body:
 
 Обязательные поля: `refresh`
 
-## Get User
+## <a href="#№">Get User</a>
 ```
 GET /user/{id}
 ```
-Аутентификация не обязательна, возвращает User
+Аутентификация не обязательна, возвращает <a href="#user">User</a>
 
-## Update User
+## <a href="#№">Update User</a>
 ```
 PATCH /user/{id}
 ```
@@ -106,30 +110,30 @@ Request body:
     "surname": ""
 }
 ```
-Аутентификация не обязательна, возвращает User
+Аутентификация не обязательна, возвращает <a href="#user">User</a>
 
 Обязательные поля: НЕТ
 
-## Delete User
+## <a href="#№">Delete User</a>
 ```
 DELETE /user/{id}
 ```
-Аутентификация обязательна, возвращает User
+Аутентификация обязательна, возвращает <a href="#user">User</a>
 
-## Subscribe User
+## <a href="#№">Subscribe User</a>
 ```
 POST /user/{id}/subscribe
 ```
-Аутентификация обязательна, возвращает User
+Аутентификация обязательна, возвращает <a href="#user">User</a>
 
-## Unsubscribe User
+## <a href="#№">Unsubscribe User</a>
 ```
 DELETE /user/{id}/subscribe
 ```
-Аутентификация обязательна, возвращает User
+Аутентификация обязательна
 
 
-## Get Several Post
+## <a href="#№">Get Several Post</a>
 ```
 GET /posts ?author_id ?offset ?limit
 ```
@@ -140,7 +144,7 @@ GET /posts ?author_id ?offset ?limit
 
 Обязательные теги: `?author_id(временно)`
 
-## Create Post
+## <a href="#№">Create Post</a>
 ```
 POST /posts
 ```
@@ -155,7 +159,7 @@ Request body:
 
 Обязательные поля: `text или object не пустые`
 
-## Get Post
+## <a href="#№">Get Post</a>
 ```
 GET /users/{id}
 ```
@@ -170,7 +174,7 @@ Request body:
 
 Обязательные поля: `text или object не пустой`
 
-## Update Post
+## <a href="#№">Update Post</a>
 ```
 PATCH /users/{id}
 ```
@@ -185,13 +189,13 @@ Request body:
 
 Обязательные поля: `text или object не пустой`
 
-## Delete Post
+## <a href="#№">Delete Post</a>
 ```
 DELETE /post/{id}
 ```
 Аутентификация обязательна, возвращает Post
 
-## Like Post
+## <a href="#№">Like Post</a>
 ```
 POST /post/{id}/like
 ```
@@ -199,13 +203,13 @@ POST /post/{id}/like
 
 Аутентификация обязательна, возвращает Post
 
-## Unlike Post
+## <a href="#№">Unlike Post</a>
 ```
 DELETE /post/{id}/like
 ```
 Аутентификация обязательна, возвращает Post
 
-## Dislike Post
+## <a href="#№">Dislike Post</a>
 ```
 POST /post/{id}/dislike
 ```
@@ -213,27 +217,27 @@ POST /post/{id}/dislike
 
 Аутентификация обязательна, возвращает Post
 
-## Undislike Post
+## <a href="#№">Undislike Post</a>
 ```
 DELETE /post/{id}/dislike
 ```
 Аутентификация обязательна, возвращает Post
 
-## Favorite Post
+## <a href="#№">Favorite Post</a>
 ```
 POST /post/{id}/favorite
 ```
 
 Аутентификация обязательна, возвращает Post
 
-## Unfavorite Post
+## <a href="#№">Unfavorite Post</a>
 ```
 DELETE /post/{id}/unfavorite
 ```
 Аутентификация обязательна, возвращает Post
 
 
-## Get Several Comments 
+## <a href="#№">Get Several Comments</a>
 ```
 GET /post/{id}/comments ?offset ?limit
 ```
@@ -244,7 +248,7 @@ GET /post/{id}/comments ?offset ?limit
 Обязательные теги: ```НЕТ```
 
 
-## Create Comments 
+## <a href="#№">Create Comments</a>
 ```
 POST /post/{id}/comments
 ```
@@ -258,14 +262,14 @@ Request body:
 
 Обязательные поля: `text`
 
-## Get Comment
+## <a href="#№">Get Comment</a>
 ```
 GET /post/{id}/comment/{id}
 ```
 Аутентификация не обязательна, возвращает Post
 
 
-## Update Comment
+## <a href="#№">Update Comment</a>
 ```
 POST /post/{id}/comment/{id}
 ```
@@ -279,14 +283,14 @@ Request body:
 
 Обязательные поля: `text`
 
-## Delete Comment
+## <a href="#№">Delete Comment</a>
 ```
 DELETE /post/{id}/comment/{id}
 ```
 Аутентификация не обязательна
 
 
-## Like Comment
+## <a href="#№">Like Comment</a>
 ```
 POST /post/{id}/comment/{id}/like
 ```
@@ -294,13 +298,13 @@ POST /post/{id}/comment/{id}/like
 
 Аутентификация обязательна, возвращает Comment
 
-## Unlike Comment
+## <a href="#№">Unlike Comment</a>
 ```
 DELETE /post/{id}/comment/{id}/like
 ```
 Аутентификация обязательна, возвращает Comment
 
-## Dislike Comment
+## <a href="#№">Dislike Comment</a>
 ```
 POST /post/{id}/comment/{id}/dislike
 ```
@@ -308,14 +312,14 @@ POST /post/{id}/comment/{id}/dislike
 
 Аутентификация обязательна, возвращает Comment
 
-## Undislike Comment
+## <a href="#№">Undislike Comment</a>
 ```
 DELETE /post/{id}/comment/{id}/dislike
 ```
 Аутентификация обязательна, возвращает Comment
 
 
-# Формат ответов
+# <a href="#content" id=response>Формат ответов</a>
 ### Предисловие:
 Некоторые ниже перечисленные поля ответов могут 
 вовсе не выводиться подразумевая, 
@@ -323,10 +327,9 @@ DELETE /post/{id}/comment/{id}/dislike
 (для поля с bool типом это false, для числа - 0, для строки - "") или ничего не хранится
 PS. Могу изменить если это неудобно для клиента, в начале я думал что это фифа, а оказалось не совсем
 
-## User
+## <p id=user>User</p>
 ```
-{
-    user: {
+user: {
         "id": 1,
         "username": "nermiabh",
         "userpic": "something url",
@@ -342,13 +345,11 @@ PS. Могу изменить если это неудобно для клиен
         "is_subscriber": true,
         "is_own": false,
     }
-}
 ```
 
-## Users 
+## <p id=users>Users</p> 
 ```
-{
-    users: [{
+users: [{
         "id": 1,
         "username": "nermiabh",
         "userpic": "something url"
@@ -359,13 +360,11 @@ PS. Могу изменить если это неудобно для клиен
         "userpic": "something url"
       }
     ]
-}
 ```
 
-## Post
+## <p id=post>Post</p>
 ```
-{
-    post: {
+post: {
         "id": 1,
         "author_id": 1,
         "text": "something text",
@@ -377,14 +376,13 @@ PS. Могу изменить если это неудобно для клиен
         "is_liked": false,
         "is_disliked": true,
         "is_favorited": true,
-    }
-}
+        "is_own": true
+    }    
 ```
 
-## Posts
+## <p id=posts>Posts</p>
 ```
-{
-    posts: [{
+posts: [{
        "id": 1,
        "text": "something text",
        "object": "something url",
@@ -396,13 +394,11 @@ PS. Могу изменить если это неудобно для клиен
        "date_of_creation": "10-12-2022 time", 
     }, 
   ]
-}
 ```
 
-## Comment
+## <p id=comments>Comments</p>
 ```
-{
-    comments: [{
+comments: [{
         "id": 1,
         "author_id": 1, 
         "author_userpic": "something url",
@@ -420,9 +416,8 @@ PS. Могу изменить если это неудобно для клиен
         ...   
     }
  ]
-}
 ```
 
-## Comment
+## <p id=comment>Comment</p>
 Как и comments только один
 
