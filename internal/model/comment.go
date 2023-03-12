@@ -9,7 +9,7 @@ type Comment struct {
 	ParentID       *int    `json:"parent_id"`
 	Text           string  `json:"text"`
 	DateCreation   string  `json:"date_of_creation,omitempty"`
-	Change         bool    `json:"change,omitempty"`
+	Change         bool    `json:"is_changed,omitempty"`
 	Likes          int     `json:"likes,omitempty"`
 	Dislikes       int     `json:"dislikes,omitempty"`
 	IsOwn          bool    `json:"is_own,omitempty"`

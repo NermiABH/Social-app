@@ -395,11 +395,34 @@ PS. Могу изменить если это неудобно для клиен
        "object": "something url",
        "date_of_creation": "10-12-2022 time", 
     }, 
-    ]
+  ]
 }
 ```
 
 ## Comment
 ```
-   
+{
+    comments: [{
+        "id": 1,
+        "author_id": 1, 
+        "author_userpic": "something url",
+        "post_id": 1,
+        "parent_id": null,
+        "text": "something text",
+        "date_of_creation": "22-10-2022 time",
+        "is_changed": true,
+        "likes": 1,
+        "dislikes": 0,
+        "is_own": true,
+        "is_liked": true,
+        "is_disliked": false, 
+    }, {
+        ...   
+    }
+ ]
+}
 ```
+
+## Comment
+Как и comments только один
+
