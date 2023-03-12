@@ -6,9 +6,10 @@ import (
 )
 
 type Store struct {
-	db             *sql.DB
-	userRepository *UserRepository
-	postRepository *PostRepository
+	db                *sql.DB
+	userRepository    *UserRepository
+	postRepository    *PostRepository
+	commentRepository *CommentRepository
 }
 
 func New(db *sql.DB) *Store {
@@ -33,4 +34,13 @@ func (s *Store) Post() *PostRepository {
 		}
 	}
 	return s.postRepository
+}
+
+func (s *Store) Comment() *CommentRepository {
+	if s.commentRepository == nil {
+		s.commentRepository = &CommentRepository{
+			store: s,
+		}
+	}
+	return s.commentRepository
 }
