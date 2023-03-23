@@ -10,21 +10,5 @@ services:
     command: ./wait-for-postgres.sh db ./social-app
     ports:
       - "8000:8000"
-    depends_on:
-      - db
     environment:
-      - DB_PASSWORD=pusinu48
-
-  db:
-    restart: always
-    image: postgres:latest
-    ports:
-      - "5436:5432"
-    environment:
-      POSTGRES_USER: "postgres"
-      DATABASE_HOST: "db"
-      POSTGRES_DB: "postgres"
-      POSTGRES_PASSWORD: "pusinu48"
-      PGDATA: /pg-data
-    volumes:
-      - pg-data:/var/lib/postgresql/data
+      - DB_PASSWORD=lhj9BfPUGYzhyTAZYltEj37ZKQeOVu6C
