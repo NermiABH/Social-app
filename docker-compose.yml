@@ -7,7 +7,6 @@ services:
   social-app:
     restart: always
     build: ./
-    command: ./wait-for-postgres.sh db ./social-app
     ports:
       - "8000:8000"
     environment:
