@@ -11,18 +11,24 @@ import (
 
 func (s *Server) HandlePostsSeveralGet(w http.ResponseWriter, r *http.Request) {
 	tag := r.URL.Query().Get("author_id")
-	uID, err := strconv.Atoi(tag)
-	if err != nil {
-		s.error(w, r, http.StatusUnprocessableEntity, errors.New("author_id_tag must be not empty and natural number"))
-		return
-	}
-	if exist, err := s.store.User().IsExist(uID); err != nil {
-		s.error(w, r, http.StatusInternalServerError, err)
-		return
-	} else if !exist {
-		fmt.Println(3)
-		s.error(w, r, http.StatusNotFound, errors.New("user is not exist"))
-		return
+	var uID int
+	if tag != "" {
+		var err error
+		uID, err = strconv.Atoi(tag)
+		if err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, errors.New("author_id_tag must be not empty and natural number"))
+			return
+		}
+		if exist, err := s.store.User().IsExist(uID); err != nil {
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		} else if !exist {
+			fmt.Println(3)
+			s.error(w, r, http.StatusNotFound, errors.New("user is not exist"))
+			return
+		}
+	} else {
+		uID = -1
 	}
 	offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
 	if err != nil || offset < 0 {

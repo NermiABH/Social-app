@@ -2,6 +2,7 @@ package store
 
 import (
 	"Social-app/internal/model"
+	"database/sql"
 	"fmt"
 	"reflect"
 )
@@ -25,12 +26,21 @@ func (r *PostRepository) GetSeveralByAuthor(authorID int, offset, limit int) ([]
 		FROM post p
 		LEFT JOIN comment c ON p.id = c.post_id
 		LEFT JOIN user_like_post ulp ON p.id = ulp.post_id
-		LEFT JOIN user_dislike_post udp on p.id = udp.post_id
-		WHERE p.author_id = $1
+		LEFT JOIN user_dislike_post udp on p.id = udp.post_id %s
 		GROUP BY p.id, p.text, p.object, p.date_of_creation
 		ORDER BY p.date_of_creation DESC
-		OFFSET $2 LIMIT $3;`
-	rows, err := r.store.db.Query(q, authorID, offset, limit)
+		OFFSET $1 LIMIT $2;`
+	var (
+		rows *sql.Rows
+		err  error
+	)
+	if authorID == -1 {
+		q = fmt.Sprintf(q, authorID)
+		rows, err = r.store.db.Query(q, offset, limit)
+	} else {
+		q = fmt.Sprintf(q, "")
+		rows, err = r.store.db.Query(q, offset, limit, authorID)
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -100,7 +100,7 @@ func (s *Server) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	s.response(w, r, http.StatusOK,
-		map[string][]any{"data": {newTokens}})
+		map[string]any{"data": newTokens})
 }
 
 func (s *Server) HandleUserRecreateTokens(w http.ResponseWriter, r *http.Request) {
@@ -136,7 +136,7 @@ func (s *Server) HandleUserRecreateTokens(w http.ResponseWriter, r *http.Request
 		},
 	}
 	s.response(w, r, http.StatusOK,
-		map[string][]any{"data": {newTokens}})
+		map[string]any{"data": newTokens})
 }
 
 func (s *Server) HandleUserGet(w http.ResponseWriter, r *http.Request) {
