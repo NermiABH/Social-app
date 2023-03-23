@@ -80,7 +80,27 @@ func (s *Server) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	tokens := jwt.New()
 	tokens.CreateTokens(u.ID)
-	s.response(w, r, http.StatusOK, tokens)
+	newTokens := []struct {
+		Type     string `json:"type"`
+		Token    string `json:"token"`
+		UserID   string `json:"user:id"`
+		TimeLife int    `json:"timelife"`
+	}{
+		{
+			Type:     "access",
+			Token:    tokens.Access,
+			UserID:   tokens.Access,
+			TimeLife: 60,
+		},
+		{
+			Type:     "refresh",
+			Token:    tokens.Refresh,
+			UserID:   tokens.Refresh,
+			TimeLife: 259200,
+		},
+	}
+	s.response(w, r, http.StatusOK,
+		map[string][]any{"data": {newTokens}})
 }
 
 func (s *Server) HandleUserRecreateTokens(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +116,27 @@ func (s *Server) HandleUserRecreateTokens(w http.ResponseWriter, r *http.Request
 		s.error(w, r, http.StatusUnauthorized, err)
 		return
 	}
-	s.response(w, r, http.StatusCreated, tokens)
+	newTokens := []struct {
+		Type     string `json:"type"`
+		Token    string `json:"token"`
+		UserID   string `json:"user:id"`
+		TimeLife int    `json:"timelife"`
+	}{
+		{
+			Type:     "access",
+			Token:    tokens.Access,
+			UserID:   tokens.Access,
+			TimeLife: 60,
+		},
+		{
+			Type:     "refresh",
+			Token:    tokens.Refresh,
+			UserID:   tokens.Refresh,
+			TimeLife: 259200,
+		},
+	}
+	s.response(w, r, http.StatusOK,
+		map[string][]any{"data": {newTokens}})
 }
 
 func (s *Server) HandleUserGet(w http.ResponseWriter, r *http.Request) {
