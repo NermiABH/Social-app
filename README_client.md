@@ -11,32 +11,32 @@
 #### | /api/public |
 Далее urls такие:
 
-|  <p id="№">№<p>   | url                             | methods              |
-|:-----------------:|:--------------------------------|:---------------------|
-| <a href="#1">1</a> | /users                          | GET / POST           |
-|         2         | /users/login                    | POST                 |
-|         3         | /users/refresh                  | POST                 |
-|         4         | /user/{id}                      | GET / PATCH / DELETE |
-|         5         | /user/id/subscribe              | POST / DELETE        |
-|         6         | /posts                          | GET / POST           |
-|         7         | /post/{id}                      | GET / POST / DELETE  |
-|         8         | /post/{id}/like                 | POST / DELETE        |
-|         9         | /post/{id}/dislike              | POST / DELETE        |
-|        10         | /post/{id}/favorite             | POST / DELETE        |
-|        11         | /post/{id}/comments             | GET / POST           |
-|        12         | /post/{id}/comment/id           | GET / POST / DELETE  |
-|        13         | /post/{id}/comment/{id}/like    | POST / DELETE        |
-|        14         | /post/{id}/comment/{id}/dislike | POST / DELETE        |
+| <p id="№">№<p> | url                             | methods              |
+|:--------------:|:--------------------------------|:---------------------|
+|       1        | /users                          | GET / POST           |
+|       2        | /users/login                    | POST                 |
+|       3        | /users/refresh                  | POST                 |
+|       4        | /user/{id}                      | GET / PATCH / DELETE |
+|       5        | /user/id/subscribe              | POST / DELETE        |
+|       6        | /posts                          | GET / POST           |
+|       7        | /post/{id}                      | GET / POST / DELETE  |
+|       8        | /post/{id}/like                 | POST / DELETE        |
+|       9        | /post/{id}/dislike              | POST / DELETE        |
+|       10       | /post/{id}/favorite             | POST / DELETE        |
+|       11       | /post/{id}/comments             | GET / POST           |
+|       12       | /post/{id}/comment/id           | GET / POST / DELETE  |
+|       13       | /post/{id}/comment/{id}/like    | POST / DELETE        |
+|       14       | /post/{id}/comment/{id}/dislike | POST / DELETE        |
 
 
 <p id="1"></p>
 
 ## <a href="#№">Get Several User</a>
 ```
-GET /users ?username=user ?offset=0 ?limit=10
+GET .../users?username=user&offset=0&limit=10
 ```
 Происходит поиск по ?username и возвращает все совпадения.
-Если ?offset и ?limit некорректные, то, берется значение по умолчанию ?offset=0 и ?limit=10
+Если ?offset и ?limit некорректные или отсутствуют, то, берется значение по умолчанию ?offset=0 и ?limit=10
 
 Обязательные теги: `username`
 
@@ -44,7 +44,7 @@ GET /users ?username=user ?offset=0 ?limit=10
 
 ## <a href="#№">Create User</a>
 ```
-POST /users
+POST .../users
 ```
 Request body:
 ```
@@ -54,14 +54,14 @@ Request body:
     "password": "password"
 }
 ```
-Аутентификация не обязательна, возвращает <a href="#user">User</a>
+Аутентификация не обязательна, возвращает <a href="#User">User</a>
 
 Обязательные поля: `username, email, password`
 
 ## <a href="#№">Login</a>
 Авторизация на основе jwt
 ```
-POST /users/login
+POST .../users/login
 ```
 Request body:
 ```
@@ -71,34 +71,34 @@ Request body:
     "password": "password"
 }
 ```
-Аутентификация не обязательна, возвращает Tokens
+Аутентификация не обязательна, возвращает <a href="#tokens">Tokens</a>
 
 Обязательные поля: `username или email, password` 
 
 ## <a href="#№">Refresh</a>
 Авторизация на основе jwt
 ```
-POST /users/refresh
+POST .../users/refresh
 ```
 Request body:
 ```
 {
-    "refresh": "token"
+    "refresh": "something token"
 }
 ```
-Аутентификация не обязательна, возвращает Tokens
+Аутентификация не обязательна, возвращает <a href="#refresh">Refresh</a>
 
 Обязательные поля: `refresh`
 
 ## <a href="#№">Get User</a>
 ```
-GET /user/{id}
+GET .../user/{id}
 ```
 Аутентификация не обязательна, возвращает <a href="#user">User</a>
 
 ## <a href="#№">Update User</a>
 ```
-PATCH /user/{id}
+PATCH .../user/{id}
 ```
 Request body:
 ```
@@ -114,28 +114,30 @@ Request body:
 
 Обязательные поля: НЕТ
 
+Возможные ошибки
+
 ## <a href="#№">Delete User</a>
 ```
-DELETE /user/{id}
+DELETE .../user/{id}
 ```
-Аутентификация обязательна, возвращает <a href="#user">User</a>
+Аутентификация обязательна.
 
 ## <a href="#№">Subscribe User</a>
 ```
-POST /user/{id}/subscribe
+POST .../user/{id}/subscribe
 ```
 Аутентификация обязательна, возвращает <a href="#user">User</a>
 
 ## <a href="#№">Unsubscribe User</a>
 ```
-DELETE /user/{id}/subscribe
+DELETE .../user/{id}/subscribe
 ```
 Аутентификация обязательна
 
 
 ## <a href="#№">Get Several Post</a>
 ```
-GET /posts ?author_id ?offset ?limit
+GET .../posts ?author_id ?offset ?limit
 ```
 Происходит поиск постов с полем ?author_id. 
 Если ?offset и ?limit некорректные, то, берется значение по умолчанию ?offset=0 и ?limit=10
@@ -196,6 +198,7 @@ DELETE /post/{id}
 Аутентификация обязательна, возвращает Post
 
 ## <a href="#№">Like Post</a>
+
 ```
 POST /post/{id}/like
 ```
@@ -319,105 +322,314 @@ DELETE /post/{id}/comment/{id}/dislike
 Аутентификация обязательна, возвращает Comment
 
 
+[//]: #                                         (ФОРМАТ ОТВЕТОВ)
 # <a href="#content" id=response>Формат ответов</a>
-### Предисловие:
-Некоторые ниже перечисленные поля ответов могут 
-вовсе не выводиться подразумевая, 
-что в нем хранится значение по умолчанию
-(для поля с bool типом это false, для числа - 0, для строки - "") или ничего не хранится
-PS. Могу изменить если это неудобно для клиента, в начале я думал что это фифа, а оказалось не совсем
+
+## <p id=tokens>Tokens</p>
+```
+{
+    "links": {
+        "self": ".../users/login",
+    },
+    "data": [{
+        "type":"access",
+        "token": "something token",
+        "user:id": 1,
+        "timelife": "something time"
+    }, {
+        "type":"refresh",
+        "token": "something token",
+        "user:id": 1,
+        "timelife": "something time"
+    }]
+}
+```
+
+## <p id=refresh>Refresh</p>
+```
+{
+    "links": {
+        "self": ".../users/refresh"
+    },
+    "data": {
+        "type":"refresh",
+        "token": "something token",
+        "user:id"
+        "timelife": "something time"
+    }
+}
+```
 
 ## <p id=user>User</p>
 ```
-user: {
+{
+    "links": {
+        "self": ".../user/1"
+    },
+    "data": {
+        "type": "user"
         "id": 1,
-        "username": "nermiabh",
-        "userpic": "something url",
-        "name": "David", 
-        "surname": "Smyr",
-        "date_of_birth": "25-10-2003",
-        "date_of_creation": "25-10-2003 time",
-        "subscriptions_count": 1,
-        "subscribers_count": 1,
-        "posts_count": 0,
-        "favorites_posts": 0,
-        "is_subscription": true,
-        "is_subscriber": true,
-        "is_own": false,
+        "attributes": {
+            "username": "nermiabh",
+            "userpic": "something url",
+            "name": "David", 
+            "surname": "Smyr",
+            "born": "2020-07к21T12:09:00Z",
+            "created": "2020-07-21T12:09:00Z",
+            "subscriptionCount": 1,
+            "subscriberCount": 1,
+            "postCount": 0,
+        },
+        "relationships": {
+            "self":{
+                "subscribed": true,
+                "subscriber": true,
+                "own": false,
+            }
+        },
     }
+}
+
 ```
 
 ## <p id=users>Users</p> 
 ```
-users: [{
+{
+    "links": {
+        "self": ".../user?username=user&offset=0&limit=10",
+        "next": ".../user?username=user&offset=10&limit=10",
+        "previous": null,
+    },
+    "data": [{
+        "type": "users",
         "id": 1,
-        "username": "nermiabh",
-        "userpic": "something url"
-      },
-      {
+        "attributes": {
+            "username": "nermiabh",
+            "userpic": "something url"
+        }
+    },{
+        "type": "users",
         "id": 2,
-        "username": "yura",
-        "userpic": "something url"
-      }
-    ]
+        "attributes": {
+            "username": "yura",
+            "userpic": "something url"
+        }
+    }]
+}
+```
+
+## <p id=user>Short User</p>
+```
+{
+    "links": {
+        "self": ".../user/1"
+    },
+    "data": {
+        "type": "user"
+        "id": 1,
+        "relationships": {
+            "self":{
+                "subscribed": true,
+                "subscriber": true,
+                "own": false,
+            }
+        }
+    }
+}
 ```
 
 ## <p id=post>Post</p>
 ```
-post: {
+{
+    "links": {
+        "self": ".../post/1"
+    },
+    data: {
+        "type": "post",
         "id": 1,
-        "author_id": 1,
-        "text": "something text",
-        "object": "something url",
-        "comments_count": 0,
-        "date_of_creation": "10.12.2022 time",
-        "likes": 0,
-        "dislikes": 0,
-        "is_liked": false,
-        "is_disliked": true,
-        "is_favorited": true,
-        "is_own": true
-    }    
+        "attributes": {
+            "text": "something text",
+            "media": ["something url", ]
+            "created": "2020-07к21T12:09:00Z",
+            "changed": true,
+            "views": 0,
+            "likes": 0,
+            "dislikes": 0,
+            "commentCount": 0,
+        },
+        "relationships": {
+            "author":{
+                "data": {
+                    "type": "user", 
+                    "id": "8",
+                    "username": "david"
+                    "userpic": "something url"
+                }
+            },
+            "self": {
+                "subscribed": true,
+                "subscriber": true,
+                "own": false,
+                "liked": true,
+                "disliked": false,
+                "favorited"
+            },
+        }
+    } 
+}  
 ```
 
 ## <p id=posts>Posts</p>
 ```
-posts: [{
-       "id": 1,
-       "text": "something text",
-       "object": "something url",
-       "date_of_creation": "10-10-2022 time", 
+{
+    "links": {
+        "self": ".../posts?author_id=0&offset=0$limit=10",
+        "next": ".../posts?username=user&offset=10&limit=10",
+        "previous": null,
+    },
+    data: [{
+        "type": "post",
+        "id": 1,
+        "attributes": {
+            "text": "something text",
+            "media": ["something url", ]
+            "created": "2020-07к21T12:09:00Z",
+            "changed": true,
+            "views": 0,
+            "likes": 0,
+            "dislikes": 0,
+            "commentCount": 0,
+        },
+        "relationships": {
+            "author":{
+                "data": {
+                    "type": "user", 
+                    "id": "8",
+                    "username": "david"
+                    "userpic": "something url"
+                }
+            },
+            "self": {
+                "subscribed": true,
+                "subscriber": true,
+                "own": false,
+            },
+        }
     }, {
-       "id": 2,
-       "text": "something text",
-       "object": "something url",
-       "date_of_creation": "10-12-2022 time", 
+       ...
     }, 
   ]
+}
 ```
 
 ## <p id=comments>Comments</p>
 ```
-comments: [{
+{   
+    "links": {
+        "self": ".../post/1/comments?offset=0&limit=5",
+        "next": ".../post/1/comments?offset=5&limit=5",
+        "previous": null,
+    },
+    data: [{
+        type: "comments",
         "id": 1,
-        "author_id": 1, 
-        "author_userpic": "something url",
-        "post_id": 1,
-        "parent_id": null,
-        "text": "something text",
-        "date_of_creation": "22-10-2022 time",
-        "is_changed": true,
-        "likes": 1,
-        "dislikes": 0,
-        "is_own": true,
-        "is_liked": true,
-        "is_disliked": false, 
+        "attributes": {
+            "text": "something text",
+            "created": "2020-07к21T12:09:00Z",
+            "changed": true,
+            "likes": 1,
+            "dislikes": 0,
+        },
+        "relationships": {
+            "author": {
+                "id": 1,
+                "username": "david"
+                "userpic": "something url",
+            }
+            "post:id": 1,
+            "parent:id": null,
+            "self": {
+                "liked": true,
+                "disliked": false, 
+                "own": true,
+            },
+        },
     }, {
         ...   
     }
  ]
+}
 ```
 
 ## <p id=comment>Comment</p>
 Как и comments только один
 
+[//]: #                                         (ОШИБКИ)
+
+# Коды статуса 
+
+
+### 200 StatusOK
+### 201 StatusCreated
+Успешное создание ресурса(вместо 200)
+
+### 400 StatusBadRequest
+Произошла некая проблема из-за которой
+сервер не смог обработать request
+
+### 401 StatusUnauthorized
+Возвращается если для url требуется аутентификация и она не прошла проверку.
+```
+{
+    "errors":{
+        "access": "something error"
+    }
+}
+```
+
+### 403 StatusForbidden
+Возникает, если сервер понял запрос, 
+но у пользователя нет прав совершить действие
+```
+{
+    "errors":{
+        "reason": "Вы не можете подписаться на себя"   
+    }
+}
+```
+
+### 404 StatusNotFound
+Если статус по причине использования 
+неправильного метода, то смотрите в Access-Control-Allow-Methods.
+Если не найдет какой-то объект, то:
+```
+{
+    "errors": {
+        "object": "not found"
+    }
+}
+```
+
+
+### 422 StatusUnprocessableEntity
+Данные не прошли валидацию
+```
+{
+    "errors": {
+        "title": "Не должен быть пустым",
+        ...
+    }
+}
+```
+
+
+### 500 StatusInternalServerError
+Возвращать ничего вроде не должно, но добавлю, 
+так как мне будет легче разобраться в чем именно ошибка
+```
+{
+    "errors": {
+        "server": "something error"
+    }.
+}
+```
