@@ -26,7 +26,7 @@ func (r *PostRepository) GetSeveralByAuthor(authorID int, offset, limit int) ([]
 		FROM post p
 		LEFT JOIN comment c ON p.id = c.post_id
 		LEFT JOIN user_like_post ulp ON p.id = ulp.post_id
-		LEFT JOIN user_dislike_post udp on p.id = udp.post_id %s
+		LEFT JOIN user_dislike_post udp on p.id = udp.post_id %v
 		GROUP BY p.id, p.text, p.object, p.date_of_creation
 		ORDER BY p.date_of_creation DESC
 		OFFSET $1 LIMIT $2;`
