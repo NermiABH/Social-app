@@ -83,19 +83,19 @@ func (s *Server) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	newTokens := []struct {
 		Type     string `json:"type"`
 		Token    string `json:"token"`
-		UserID   string `json:"user:id"`
+		UserID   int    `json:"user:id"`
 		TimeLife int    `json:"timelife"`
 	}{
 		{
 			Type:     "access",
 			Token:    tokens.Access,
-			UserID:   tokens.Access,
+			UserID:   u.ID,
 			TimeLife: 60,
 		},
 		{
 			Type:     "refresh",
 			Token:    tokens.Refresh,
-			UserID:   tokens.Refresh,
+			UserID:   u.ID,
 			TimeLife: 259200,
 		},
 	}
@@ -111,7 +111,7 @@ func (s *Server) HandleUserRecreateTokens(w http.ResponseWriter, r *http.Request
 	}
 	tokens := jwt.Tokens{}
 	tokens.Refresh = req.Refresh
-	err := tokens.RecreateTokens()
+	ID, err := tokens.RecreateTokens()
 	if err != nil {
 		s.error(w, r, http.StatusUnauthorized, err)
 		return
@@ -119,19 +119,19 @@ func (s *Server) HandleUserRecreateTokens(w http.ResponseWriter, r *http.Request
 	newTokens := []struct {
 		Type     string `json:"type"`
 		Token    string `json:"token"`
-		UserID   string `json:"user:id"`
+		UserID   int    `json:"user:id"`
 		TimeLife int    `json:"timelife"`
 	}{
 		{
 			Type:     "access",
 			Token:    tokens.Access,
-			UserID:   tokens.Access,
+			UserID:   ID,
 			TimeLife: 60,
 		},
 		{
 			Type:     "refresh",
 			Token:    tokens.Refresh,
-			UserID:   tokens.Refresh,
+			UserID:   ID,
 			TimeLife: 259200,
 		},
 	}
