@@ -23,7 +23,6 @@ func (s *Server) HandlePostsSeveralGet(w http.ResponseWriter, r *http.Request) {
 			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		} else if !exist {
-			fmt.Println(3)
 			s.error(w, r, http.StatusNotFound, errors.New("user is not exist"))
 			return
 		}

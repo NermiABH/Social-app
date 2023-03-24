@@ -36,10 +36,10 @@ func (r *PostRepository) GetSeveralByAuthor(authorID int, offset, limit int) ([]
 	)
 	if authorID == -1 {
 		q = fmt.Sprintf(q, authorID)
-		rows, err = r.store.db.Query(q, offset, limit)
+		rows, err = r.store.db.Query(q, offset, limit, authorID)
 	} else {
 		q = fmt.Sprintf(q, "")
-		rows, err = r.store.db.Query(q, offset, limit, authorID)
+		rows, err = r.store.db.Query(q, offset, limit)
 	}
 	if err != nil {
 		return nil, err
