@@ -382,8 +382,9 @@ DELETE /post/{id}/comment/{id}/dislike
         },
         "relationships": {
             "self":{
-                "subscribed": true,
-                "subscriber": true,
+                "liked":     "true",
+				"disliked":  "false",
+				"favorited": "true",
                 "own": false,
             }
         },
@@ -418,26 +419,6 @@ DELETE /post/{id}/comment/{id}/dislike
 }
 ```
 
-## <p id=user>Short User</p>
-```
-{
-    "links": {
-        "self": ".../user/1"
-    },
-    "data": {
-        "type": "user"
-        "id": 1,
-        "relationships": {
-            "self":{
-                "subscribed": true,
-                "subscriber": true,
-                "own": false,
-            }
-        }
-    }
-}
-```
-
 ## <p id=post>Post</p>
 ```
 {
@@ -459,12 +440,9 @@ DELETE /post/{id}/comment/{id}/dislike
         },
         "relationships": {
             "author":{
-                "data": {
-                    "type": "user", 
-                    "id": "8",
-                    "username": "david"
-                    "userpic": "something url"
-                }
+                "id": "8",
+                "username": "david"
+                "userpic": "something url"
             },
             "self": {
                 "subscribed": true,
@@ -502,12 +480,9 @@ DELETE /post/{id}/comment/{id}/dislike
         },
         "relationships": {
             "author":{
-                "data": {
-                    "type": "user", 
-                    "id": "8",
-                    "username": "david"
-                    "userpic": "something url"
-                }
+                "id": "8",
+                "username": "david"
+                "userpic": "something url"
             },
             "self": {
                 "subscribed": true,
