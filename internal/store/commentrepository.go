@@ -1,6 +1,5 @@
 package store
 
-import "C"
 import (
 	"Social-app/internal/model"
 	"fmt"
