@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -11,8 +10,22 @@ const (
 )
 
 type Tokens struct {
-	Access  string `json:"access"`
-	Refresh string `json:"refresh"`
+	UserID  int
+	Access  string
+	Refresh string
+}
+
+func (t *Tokens) ConvertMap() []map[string]any {
+	return []map[string]any{
+		{"type": "access",
+			"token":    t.Access,
+			"user:id":  t.UserID,
+			"timelife": AccessTime},
+		{"type": "refresh",
+			"token":    t.Refresh,
+			"user:id":  t.UserID,
+			"timelife": RefreshTime},
+	}
 }
 
 func New() *Tokens {
@@ -20,11 +33,10 @@ func New() *Tokens {
 }
 
 func (t *Tokens) CreateTokens(id int) {
-	t.Access, t.Refresh = Create(id, AccessTime), Create(id, RefreshTime)
+	t.UserID, t.Access, t.Refresh = id, Create(id, AccessTime), Create(id, RefreshTime)
 }
 
 func (t *Tokens) RecreateTokens() error {
-	fmt.Print()
 	payload, err := Verify(t.Refresh)
 	if err != nil {
 		return err
