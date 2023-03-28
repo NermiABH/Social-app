@@ -1,6 +1,7 @@
 package apiserver
 
 import (
+	"Social-app/internal/model"
 	"github.com/go-playground/validator/v10"
 	"reflect"
 )
@@ -35,7 +36,7 @@ func Validate(u any) map[string]string {
 func (s *Server) ValidateUserCreateUpdate(username, email string) (map[string]string, error) {
 	vucu := make(map[string]string)
 	if username != "" {
-		exist, err := s.store.User().IsExistByUsername(username)
+		exist, err := s.store.User().ExistByUsername(username)
 		if err != nil {
 			return vucu, err
 		} else if exist {
@@ -43,7 +44,7 @@ func (s *Server) ValidateUserCreateUpdate(username, email string) (map[string]st
 		}
 	}
 	if email != "" {
-		exist, err := s.store.User().IsExistByEmail(email)
+		exist, err := s.store.User().ExistByEmail(email)
 		if err != nil {
 			return vucu, err
 		} else if exist {
@@ -51,4 +52,19 @@ func (s *Server) ValidateUserCreateUpdate(username, email string) (map[string]st
 		}
 	}
 	return vucu, nil
+}
+
+func (s *Server) ValidateUserLogin(req *UserLogin) (*model.User, error) {
+	var (
+		u   *model.User
+		err error
+	)
+	if req.Username != "" {
+		u = &model.User{Username: req.Username}
+		err = s.store.User().GetPasswordByUsername(u)
+	} else {
+		u = &model.User{Email: req.Email}
+		err = s.store.User().GetPasswordByEmail(u)
+	}
+	return u, err
 }
