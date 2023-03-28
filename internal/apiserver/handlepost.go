@@ -2,47 +2,71 @@ package apiserver
 
 import (
 	"Social-app/internal/model"
+	"Social-app/internal/store"
 	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
 	"strconv"
 )
 
 func (s *Server) HandlePostsSeveralGet(w http.ResponseWriter, r *http.Request) {
-	tag := r.URL.Query().Get("author_id")
-	var uID int
-	if tag != "" {
+	auth := r.Context().Value(ctxAuth).(*CtxAuth)
+	var authorID *int
+	if queryID := r.URL.Query().Get("author_id"); queryID != "" {
 		var err error
-		uID, err = strconv.Atoi(tag)
-		if err != nil {
-			s.error(w, r, http.StatusUnprocessableEntity, errors.New("author_id_tag must be not empty and natural number"))
+		if *authorID, err = strconv.Atoi(queryID); err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
-		if exist, err := s.store.User().IsExist(uID); err != nil {
+		if exist, err := s.store.User().ExistByID(*authorID); err != nil {
 			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		} else if !exist {
-			s.error(w, r, http.StatusNotFound, errors.New("user is not exist"))
+			s.error(w, r, http.StatusNotFound, errors.New("author does not exist"))
 			return
 		}
-	} else {
-		uID = -1
 	}
-	offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
-	if err != nil || offset < 0 {
-		offset = 0
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil || page < 0 {
+		page = 0
 	}
-	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
-	if err != nil || limit < 0 {
-		limit = 10
-	}
-	posts, err := s.store.Post().GetSeveralByAuthor(uID, offset, limit)
+	posts, err := s.store.Post().GetSeveralByAuthor(page, authorID)
 	if err != nil {
 		s.error(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	s.response(w, r, http.StatusOK, map[string][]model.Post{"posts": posts})
+	if auth.Err == nil {
+		for _, post := range posts {
+			if owner, err := s.store.Post().IsOwnerByID(auth.UserID, post.ID); err != nil {
+				s.error(w, r, http.StatusInternalServerError, err)
+				return
+			} else if owner {
+				post.Own = true
+			}
+			if err := s.store.Post().LikedOrDislikedOrFavorited(post, post.ID); err != nil {
+				s.error(w, r, http.StatusInternalServerError, err)
+				return
+			}
+		}
+	}
+	var linkNext, linkPrev *string
+	if page != 0 {
+		linkPrev = returnPointer(fmt.Sprintf("%s?page=%v", r.URL.Path, page-1))
+	}
+	if postCount, err := s.store.Post().Count(); err != nil {
+		s.error(w, r, http.StatusInternalServerError, err)
+		return
+	} else if postCount > (page+1)*store.LimitPost {
+		linkNext = returnPointer(fmt.Sprintf("%s?page=%v", r.URL.Path, page+1))
+	}
+	s.response(w, r, http.StatusOK, map[string]any{
+		"links": map[string]any{
+			"self": r.RequestURI,
+			"next": linkNext,
+			"prev": linkPrev,
+		},
+		"data": posts.ConvertMap(),
+	})
 }
 
 func (s *Server) HandlePostCreate(w http.ResponseWriter, r *http.Request) {
@@ -59,15 +83,19 @@ func (s *Server) HandlePostCreate(w http.ResponseWriter, r *http.Request) {
 	p := &model.Post{
 		AuthorID: pID,
 		Text:     req.Text,
-		Object:   req.Object,
-		IsOwn:    true,
+		Media:    req.Media,
 	}
 	if err := s.store.Post().Create(p); err != nil {
-		fmt.Println(2)
 		s.error(w, r, http.StatusUnprocessableEntity, err)
 		return
 	}
-	s.response(w, r, http.StatusCreated, map[string]*model.Post{"post": p})
+	p.Own = true
+	s.response(w, r, http.StatusCreated, map[string]any{
+		"links": map[string]string{
+			"self": r.RequestURI,
+		},
+		"data": p.ConvertMap(),
+	})
 }
 
 func (s *Server) HandlePostGet(w http.ResponseWriter, r *http.Request) {
@@ -78,46 +106,51 @@ func (s *Server) HandlePostGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if owner.Err == nil {
-		p.IsOwn = true
+		p.Own = true
 	} else if err := s.store.Post().LikedOrDislikedOrFavorited(p, owner.UserID); err != nil {
 		s.error(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	s.response(w, r, http.StatusOK, map[string]*model.Post{"post": p})
+	s.response(w, r, http.StatusCreated, map[string]any{
+		"links": map[string]string{
+			"self": r.RequestURI,
+		},
+		"data": p.ConvertMap(),
+	})
 }
 
-func (s *Server) HandlePostUpdate(w http.ResponseWriter, r *http.Request) {
-	owner := r.Context().Value(ctxOwner).(*CtxOwner)
-	if owner.Err != nil {
-		s.error(w, r, owner.Code, owner.Err)
-		return
-	}
-	pID, req := owner.ObjectID, &PostCreateUpdate{}
-	if code, err := s.correctRequest(r, req); err != nil {
-		s.error(w, r, code, err)
-		return
-	} else if reflect.DeepEqual(*req, PostCreateUpdate{}) {
-		s.error(w, r, http.StatusUnprocessableEntity, errors.New("empty struct"))
-		return
-	}
-	var fields []string
-	valuesArray := make([]any, 0)
-	values := reflect.ValueOf(*req)
-	types := values.Type()
-	for i := 0; i < values.NumField(); i++ {
-		if values.Field(i).IsZero() {
-			fmt.Println(values.Field(i).IsZero())
-			continue
-		}
-		fields = append(fields, types.Field(i).Tag.Get("json"))
-		valuesArray = append(valuesArray, values.Field(i).Interface())
-	}
-	if err := s.store.Post().Update(pID, fields, valuesArray); err != nil {
-		s.error(w, r, http.StatusInternalServerError, err)
-		return
-	}
-	s.HandlePostGet(w, r)
-}
+//func (s *Server) HandlePostUpdate(w http.ResponseWriter, r *http.Request) {
+//	owner := r.Context().Value(ctxOwner).(*CtxOwner)
+//	if owner.Err != nil {
+//		s.error(w, r, owner.Code, owner.Err)
+//		return
+//	}
+//	pID, req := owner.ObjectID, &PostCreateUpdate{}
+//	if code, err := s.correctRequest(r, req); err != nil {
+//		s.error(w, r, code, err)
+//		return
+//	} else if reflect.DeepEqual(*req, PostCreateUpdate{}) {
+//		s.error(w, r, http.StatusUnprocessableEntity, errors.New("empty struct"))
+//		return
+//	}
+//	var fields []string
+//	valuesArray := make([]any, 0)
+//	values := reflect.ValueOf(*req)
+//	types := values.Type()
+//	for i := 0; i < values.NumField(); i++ {
+//		if values.Field(i).IsZero() {
+//			fmt.Println(values.Field(i).IsZero())
+//			continue
+//		}
+//		fields = append(fields, types.Field(i).Tag.Get("json"))
+//		valuesArray = append(valuesArray, values.Field(i).Interface())
+//	}
+//	if err := s.store.Post().Update(pID, fields, valuesArray); err != nil {
+//		s.error(w, r, http.StatusInternalServerError, err)
+//		return
+//	}
+//	s.HandlePostGet(w, r)
+//}
 
 func (s *Server) HandlePostDelete(w http.ResponseWriter, r *http.Request) {
 	owner := r.Context().Value(ctxOwner).(*CtxOwner)

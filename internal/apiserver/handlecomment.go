@@ -4,36 +4,35 @@ import (
 	"Social-app/internal/model"
 	"fmt"
 	"net/http"
-	"strconv"
 )
 
-func (s *Server) HandleCommentsSeveralGet(w http.ResponseWriter, r *http.Request) {
-	pOwner := r.Context().Value(ctxOwner).(*CtxOwner)
-	offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
-	if err != nil || offset < 0 {
-		offset = 0
-	}
-	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
-	if err != nil || limit < 0 {
-		limit = 10
-	}
-	cSlice, err := s.store.Comment().GetSeveral(pOwner.ObjectID, offset, limit)
-	if err != nil {
-		s.error(w, r, http.StatusInternalServerError, err)
-		return
-	}
-	uID := pOwner.UserID
-	for _, c := range cSlice {
-		if c.AuthorID == uID {
-			c.IsOwn = true
-		}
-		if err = s.store.Comment().LikedOrDisliked(c, uID); err != nil {
-			s.error(w, r, http.StatusInternalServerError, err)
-			return
-		}
-	}
-	s.response(w, r, http.StatusOK, map[string][]*model.Comment{"comments": cSlice})
-}
+//func (s *Server) HandleCommentsSeveralGet(w http.ResponseWriter, r *http.Request) {
+//	pOwner := r.Context().Value(ctxOwner).(*CtxOwner)
+//	offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
+//	if err != nil || offset < 0 {
+//		offset = 0
+//	}
+//	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+//	if err != nil || limit < 0 {
+//		limit = 10
+//	}
+//	cSlice, err := s.store.Comment().GetSeveral(pOwner.ObjectID, offset, limit)
+//	if err != nil {
+//		s.error(w, r, http.StatusInternalServerError, err)
+//		return
+//	}
+//	uID := pOwner.UserID
+//	for _, c := range cSlice {
+//		if c.AuthorID == uID {
+//			c.IsOwn = true
+//		}
+//		if err = s.store.Comment().LikedOrDisliked(c, uID); err != nil {
+//			s.error(w, r, http.StatusInternalServerError, err)
+//			return
+//		}
+//	}
+//	s.response(w, r, http.StatusOK, map[string][]*model.Comment{"comments": cSlice})
+//}
 
 func (s *Server) HandleCommentGet(w http.ResponseWriter, r *http.Request) {
 	owner := r.Context().Value(ctxOwner).(*CtxOwner)
@@ -45,7 +44,7 @@ func (s *Server) HandleCommentGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if owner.Err == nil {
-		c.IsOwn = true
+		c.Own = true
 	}
 	if err := s.store.Comment().LikedOrDisliked(c, owner.UserID); err != nil {
 		fmt.Println(err)
@@ -70,7 +69,7 @@ func (s *Server) HandleCommentCreate(w http.ResponseWriter, r *http.Request) {
 		PostID:   owner.ObjectID,
 		AuthorID: owner.UserID,
 		Text:     req.Text,
-		IsOwn:    true,
+		Own:      true,
 	}
 	if err := s.store.Comment().Create(c); err != nil {
 		s.error(w, r, http.StatusUnprocessableEntity, err)

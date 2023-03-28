@@ -25,11 +25,11 @@ type UserUpdate struct {
 }
 
 type PostCreateUpdate struct {
-	Text   string `json:"text"`
-	Object string `json:"object"`
+	Text  *string   `json:"text"`
+	Media *[]string `json:"media"`
 }
 
 type CommentCreateUpdate struct {
-	ParentID *int   `json:"parent_id"`
+	ParentID int    `json:"parent_id"`
 	Text     string `json:"text" validate:"required"`
 }

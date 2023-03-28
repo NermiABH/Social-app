@@ -3,29 +3,43 @@ package apiserver
 import (
 	"Social-app/internal/jwt"
 	"Social-app/internal/model"
+	"Social-app/internal/store"
 	"errors"
+	"fmt"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
-	"reflect"
 	"strconv"
 )
 
 func (s *Server) HandleUsersSeveralGet(w http.ResponseWriter, r *http.Request) {
 	partUsername := r.URL.Query().Get("username")
-	offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
-	if err != nil || offset < 0 {
-		offset = 0
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil || page < 0 {
+		page = 0
 	}
-	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
-	if err != nil || limit < 0 {
-		limit = 10
-	}
-	users, err := s.store.User().GetSeveralByUsername(partUsername, offset, limit)
+	users, err := s.store.User().GetSeveralByUsername(partUsername, page)
 	if err != nil {
 		s.error(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	s.response(w, r, http.StatusOK, map[string][]model.User{"users": users})
+	var linkNext, linkPrev *string
+	if page != 0 {
+		linkPrev = returnPointer(fmt.Sprintf("%s?page=%v", r.URL.Path, page-1))
+	}
+	if userCount, err := s.store.User().Count(); err != nil {
+		s.error(w, r, http.StatusInternalServerError, err)
+		return
+	} else if userCount > (page+1)*store.LimitUser {
+		linkNext = returnPointer(fmt.Sprintf("%s?page=%v", r.URL.Path, page+1))
+	}
+	s.response(w, r, http.StatusOK, map[string]any{
+		"links": map[string]any{
+			"self": r.RequestURI,
+			"next": linkNext,
+			"prev": linkPrev,
+		},
+		"data": users.ConvertMap(),
+	})
 }
 
 func (s *Server) HandleUserCreate(w http.ResponseWriter, r *http.Request) {
@@ -45,14 +59,17 @@ func (s *Server) HandleUserCreate(w http.ResponseWriter, r *http.Request) {
 		Username: req.Username,
 		Email:    req.Email,
 		Password: req.Password,
-		IsOwn:    true,
 	}
 	if err := s.store.User().Create(u); err != nil {
 		s.error(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	u.Sanitize()
-	s.response(w, r, http.StatusCreated, map[string]*model.User{"user": u})
+	s.response(w, r, http.StatusCreated, map[string]any{
+		"links": map[string]string{
+			"self": r.RequestURI,
+		},
+		"data": u.ConvertMap(),
+	})
 }
 
 func (s *Server) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
@@ -61,15 +78,7 @@ func (s *Server) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 		s.error(w, r, code, err)
 		return
 	}
-	var err error
-	u := &model.User{}
-	if req.Username != "" {
-		u.Username = req.Username
-		err = s.store.User().GetPasswordByUsername(u)
-	} else {
-		u.Email = req.Email
-		err = s.store.User().GetPasswordByEmail(u)
-	}
+	u, err := s.ValidateUserLogin(req)
 	if err != nil {
 		s.error(w, r, http.StatusNotFound, ErrorIncorrectLoginOrPassword)
 		return
@@ -80,27 +89,12 @@ func (s *Server) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	tokens := jwt.New()
 	tokens.CreateTokens(u.ID)
-	newTokens := []struct {
-		Type     string `json:"type"`
-		Token    string `json:"token"`
-		UserID   int    `json:"user:id"`
-		TimeLife int    `json:"timelife"`
-	}{
-		{
-			Type:     "access",
-			Token:    tokens.Access,
-			UserID:   u.ID,
-			TimeLife: 60,
+	s.response(w, r, http.StatusOK, map[string]any{
+		"links": map[string]string{
+			"self": r.RequestURI,
 		},
-		{
-			Type:     "refresh",
-			Token:    tokens.Refresh,
-			UserID:   u.ID,
-			TimeLife: 259200,
-		},
-	}
-	s.response(w, r, http.StatusOK,
-		map[string]any{"data": newTokens})
+		"data": tokens.ConvertMap(),
+	})
 }
 
 func (s *Server) HandleUserRecreateTokens(w http.ResponseWriter, r *http.Request) {
@@ -109,34 +103,17 @@ func (s *Server) HandleUserRecreateTokens(w http.ResponseWriter, r *http.Request
 		s.error(w, r, code, err)
 		return
 	}
-	tokens := jwt.Tokens{}
-	tokens.Refresh = req.Refresh
-	ID, err := tokens.RecreateTokens()
-	if err != nil {
+	tokens := jwt.Tokens{Refresh: req.Refresh}
+	if err := tokens.RecreateTokens(); err != nil {
 		s.error(w, r, http.StatusUnauthorized, err)
 		return
 	}
-	newTokens := []struct {
-		Type     string `json:"type"`
-		Token    string `json:"token"`
-		UserID   int    `json:"user:id"`
-		TimeLife int    `json:"timelife"`
-	}{
-		{
-			Type:     "access",
-			Token:    tokens.Access,
-			UserID:   ID,
-			TimeLife: 60,
+	s.response(w, r, http.StatusCreated, map[string]any{
+		"links": map[string]any{
+			"self": r.RequestURI,
 		},
-		{
-			Type:     "refresh",
-			Token:    tokens.Refresh,
-			UserID:   ID,
-			TimeLife: 259200,
-		},
-	}
-	s.response(w, r, http.StatusOK,
-		map[string]any{"data": newTokens})
+		"data": tokens.ConvertMap(),
+	})
 }
 
 func (s *Server) HandleUserGet(w http.ResponseWriter, r *http.Request) {
@@ -146,49 +123,55 @@ func (s *Server) HandleUserGet(w http.ResponseWriter, r *http.Request) {
 		s.error(w, r, http.StatusInternalServerError, err)
 		return
 	}
-
-	err := s.store.User().Relation(u, owner.UserID)
-	if err != nil {
+	if owner.Err == nil {
+		u.Own = true
+	} else if err := s.store.User().SubscribedOrSubscriber(u, owner.UserID); err != nil {
 		s.error(w, r, http.StatusInternalServerError, err)
+		return
 	}
-	s.response(w, r, http.StatusOK, map[string]*model.User{"user": u})
+	s.response(w, r, http.StatusOK, map[string]any{
+		"links": map[string]string{
+			"self": r.RequestURI,
+		},
+		"data": u.ConvertMap(),
+	})
 }
 
-func (s *Server) HandleUserUpdate(w http.ResponseWriter, r *http.Request) {
-	owner := r.Context().Value(ctxOwner).(*CtxOwner)
-	if owner.Err != nil {
-		s.error(w, r, owner.Code, owner.Err)
-		return
-	}
-	uID, req := owner.ObjectID, &UserUpdate{}
-	if code, err := s.correctRequest(r, req); err != nil {
-		s.error(w, r, code, err)
-		return
-	}
-	if vucu, err := s.ValidateUserCreateUpdate(req.Username, req.Email); err != nil {
-		s.error(w, r, http.StatusInternalServerError, err)
-		return
-	} else if len(vucu) != 0 {
-		s.error(w, r, http.StatusUnprocessableEntity, vucu)
-		return
-	}
-	var fields []string
-	valuesArray := make([]any, 0)
-	values := reflect.ValueOf(*req)
-	types := values.Type()
-	for i := 0; i < values.NumField(); i++ {
-		if values.Field(i).IsZero() {
-			continue
-		}
-		fields = append(fields, types.Field(i).Tag.Get("json"))
-		valuesArray = append(valuesArray, values.Field(i).Interface())
-	}
-	if err := s.store.User().Update(uID, fields, valuesArray); err != nil {
-		s.error(w, r, http.StatusInternalServerError, err)
-		return
-	}
-	s.HandleUserGet(w, r)
-}
+//func (s *Server) HandleUserUpdate(w http.ResponseWriter, r *http.Request) {
+//	owner := r.Context().Value(ctxOwner).(*CtxOwner)
+//	if owner.Err != nil {
+//		s.error(w, r, owner.Code, owner.Err)
+//		return
+//	}
+//	uID, req := owner.ObjectID, &UserUpdate{}
+//	if code, err := s.correctRequest(r, req); err != nil {
+//		s.error(w, r, code, err)
+//		return
+//	}
+//	if vucu, err := s.ValidateUserCreateUpdate(req.Username, req.Email); err != nil {
+//		s.error(w, r, http.StatusInternalServerError, err)
+//		return
+//	} else if len(vucu) != 0 {
+//		s.error(w, r, http.StatusUnprocessableEntity, vucu)
+//		return
+//	}
+//	var fields []string
+//	valuesArray := make([]any, 0)
+//	values := reflect.ValueOf(*req)
+//	types := values.Type()
+//	for i := 0; i < values.NumField(); i++ {
+//		if values.Field(i).IsZero() {
+//			continue
+//		}
+//		fields = append(fields, types.Field(i).Tag.Get("json"))
+//		valuesArray = append(valuesArray, values.Field(i).Interface())
+//	}
+//	if err := s.store.User().Update(uID, fields, valuesArray); err != nil {
+//		s.error(w, r, http.StatusInternalServerError, err)
+//		return
+//	}
+//	s.HandleUserGet(w, r)
+//}
 
 func (s *Server) HandleUserDelete(w http.ResponseWriter, r *http.Request) {
 	owner := r.Context().Value(ctxOwner).(*CtxOwner)
@@ -208,8 +191,7 @@ func (s *Server) HandleUserSubscribe(w http.ResponseWriter, r *http.Request) {
 	if owner.Code == http.StatusUnauthorized {
 		s.error(w, r, owner.Code, owner.Err)
 		return
-	}
-	if owner.Err == nil {
+	} else if owner.Err == nil {
 		s.error(w, r, http.StatusForbidden, errors.New("you can't subscribe to yourself"))
 		return
 	}
@@ -226,8 +208,7 @@ func (s *Server) HandleUserUnSubscribe(w http.ResponseWriter, r *http.Request) {
 	if owner.Code == http.StatusUnauthorized {
 		s.error(w, r, owner.Code, owner.Err)
 		return
-	}
-	if owner.Err == nil {
+	} else if owner.Err == nil {
 		s.error(w, r, owner.Code, errors.New("you can't subscribe to yourself"))
 		return
 	}
