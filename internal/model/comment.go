@@ -1,18 +1,46 @@
 package model
 
 type Comment struct {
-	ID             int     `json:"id"`
-	AuthorID       int     `json:"author_id"`
-	AuthorUsername string  `json:"author_username"`
-	AuthorUserpic  *string `json:"author_userpic"`
-	PostID         int     `json:"post_id"`
-	ParentID       *int    `json:"parent_id"`
-	Text           string  `json:"text"`
-	DateCreation   string  `json:"date_of_creation,omitempty"`
-	Change         bool    `json:"is_changed,omitempty"`
-	Likes          int     `json:"likes,omitempty"`
-	Dislikes       int     `json:"dislikes,omitempty"`
-	IsOwn          bool    `json:"is_own,omitempty"`
-	IsLiked        bool    `json:"is_like,omitempty"`
-	IsDisliked     bool    `json:"is_dislike,omitempty"`
+	ID             int
+	Text           string
+	Created        string
+	Changed        bool
+	LikeCount      int
+	DislikeCount   int
+	AuthorID       int
+	AuthorUsername string
+	AuthorUserpic  string
+	PostID         int
+	ParentID       *int
+	Liked          bool
+	Disliked       bool
+	Own            bool
+}
+
+func (c *Comment) ConvertMap() *map[string]any {
+	return &map[string]any{
+		"type": "comments",
+		"id":   c.ID,
+		"attributes": map[string]any{
+			"text":     c.Text,
+			"created":  c.Created,
+			"changed":  c.Changed,
+			"likes":    c.Liked,
+			"dislikes": c.Disliked,
+		},
+		"relationships": map[string]any{
+			"author": map[any]any{
+				"id":       c.AuthorID,
+				"username": c.AuthorUsername,
+				"userpic":  c.AuthorUserpic,
+			},
+			"post:id":   c.PostID,
+			"parent:id": c.ParentID,
+			"self": map[string]any{
+				"liked":    c.Liked,
+				"disliked": c.Disliked,
+				"own":      c.Own,
+			},
+		},
+	}
 }
