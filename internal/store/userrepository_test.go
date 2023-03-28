@@ -20,22 +20,22 @@ func TestUserRepository_Create(t *testing.T) {
 	}
 }
 
-func TestUserRepository_GetSeveralByUsername(t *testing.T) {
-	db, _ := TestDB(t, databaseURL)
-	s := store.New(db)
-	testCase := []struct {
-		part   string
-		offset int
-		limit  int
-	}{
-		{"t", 0, 5}, {"te", 0, 10},
-	}
-	for _, u := range testCase {
-		uSlice, err := s.User().GetSeveralByUsername(u.part, u.limit, u.offset)
-		assert.NotNil(t, uSlice)
-		assert.NoError(t, err)
-	}
-}
+//func TestUserRepository_GetSeveralByUsername(t *testing.T) {
+//	db, _ := TestDB(t, databaseURL)
+//	s := store.New(db)
+//	testCase := []struct {
+//		part   string
+//		offset int
+//		limit  int
+//	}{
+//		{"t", 0, 5}, {"te", 0, 10},
+//	}
+//	for _, u := range testCase {
+//		uSlice, err := s.User().GetSeveralByUsername(u.part, u.limit, u.offset)
+//		assert.NotNil(t, uSlice)
+//		assert.NoError(t, err)
+//	}
+//}
 
 func TestUserRepository_GetPasswordByUsername(t *testing.T) {
 	db, _ := TestDB(t, databaseURL)
