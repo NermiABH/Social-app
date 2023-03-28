@@ -3,8 +3,8 @@ log_level: "debug"
 
 db:
   username: "nermiabh"
-  host: "dpg-cg6o0vg2qv28u2q3eplg-a"
+  host: "dpg-cghcmdd269v15el5igq0-a"
   port: "5432"
-  dbname: "socialldb"
-  password: "lhj9BfPUGYzhyTAZYltEj37ZKQeOVu6C"
+  dbname: "socialldb_4aod"
+  password: "dfIQaZaymZWRBxI8aoTms1lP5KDkejz4"
   sslmode: "disable"
