@@ -3,7 +3,6 @@ package store
 import (
 	"Social-app/internal/model"
 	"fmt"
-	"reflect"
 )
 
 type PostRepository struct {
@@ -11,39 +10,44 @@ type PostRepository struct {
 }
 
 func (r *PostRepository) Create(p *model.Post) error {
-	q := `INSERT INTO post (author_id, text, object)
-		VALUES ($1, $2, $3) RETURNING id;`
-	fmt.Println(1)
-	return r.store.db.QueryRow(q, p.AuthorID, p.Text, p.Object).Scan(&p.ID)
+	q := `INSERT INTO post (author_id, text, media) VALUES ($1, $2, $3) RETURNING id`
+	if err := r.store.db.QueryRow(q, p.AuthorID, p.Text, p.Media).Scan(&p.ID); err != nil {
+		return err
+	}
+	return r.GetByID(p)
 }
 
-func (r *PostRepository) GetSeveralByAuthor(authorID int, offset, limit int) ([]model.Post, error) {
-	q := `SELECT p.id, p.text, p.object, p.date_of_creation,
-		   COUNT(c) as comments_count,
-		   COUNT(ulp) as likes,
-		   COUNT(udp) as dislikes
+var LimitPost = 15
+
+func (r *PostRepository) GetSeveralByAuthor(page int, authorID *int) (model.Posts, error) {
+	q := `SELECT p.id, p.text, p.media, p.created,
+		COUNT(c) as comments_count, COUNT(ulp) as likes, COUNT(udp) as dislikes
 		FROM post p
 		LEFT JOIN comment c ON p.id = c.post_id
 		LEFT JOIN user_like_post ulp ON p.id = ulp.post_id
-		LEFT JOIN user_dislike_post udp on p.id = udp.post_id
-		WHERE p.author_id = $1
-		GROUP BY p.id, p.text, p.object, p.date_of_creation
-		ORDER BY p.date_of_creation DESC
-		OFFSET $2 LIMIT $3;`
-	rows, err := r.store.db.Query(q, authorID, offset, limit)
+		LEFT JOIN user_dislike_post udp on p.id = udp.post_id 
+		%s
+		GROUP BY p.id, p.text, p.media, p.created
+		ORDER BY p.created DESC
+		OFFSET $1 LIMIT $2;`
+	if authorID == nil {
+		q = fmt.Sprintf(q, "")
+	} else {
+		q = fmt.Sprintf(q, fmt.Sprintf("WHERE p.authorID=%v", *authorID))
+	}
+	rows, err := r.store.db.Query(q, page*LimitPost, LimitPost)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	pSlice := make([]model.Post, 0)
+	pSlice := make(model.Posts, 0)
 	for rows.Next() {
 		var p model.Post
-		if err = rows.Scan(&p.ID, &p.Text, &p.Object,
-			&p.DateCreation, &p.CommentsCount,
-			&p.Likes, &p.Dislikes); err != nil {
+		if err = rows.Scan(&p.ID, &p.Text, &p.Media, &p.Created, &p.CommentCount,
+			&p.Liked, &p.Disliked); err != nil {
 			return nil, err
 		}
-		pSlice = append(pSlice, p)
+		pSlice = append(pSlice, &p)
 	}
 	if err = rows.Err(); err != nil {
 		return nil, err
@@ -52,35 +56,34 @@ func (r *PostRepository) GetSeveralByAuthor(authorID int, offset, limit int) ([]
 }
 
 func (r *PostRepository) GetByID(p *model.Post) error {
-	q := `SELECT p.author_id, p.text, p.object, p.date_of_creation,
-		   COUNT(c) as comments_count,
-		   COUNT(ulp) as likes,
-		   COUNT(udp) as dislikes
+	q := `SELECT p.author_id, u.username, u.userpic, p.text, p.media, p.created,
+		COUNT(c) as comments_count, COUNT(ulp) as likes, COUNT(udp) as dislikes
 		FROM post p
+		LEFT JOIN users u on p.author_id = u.id
 		LEFT JOIN comment c on p.id = c.post_id
 		LEFT JOIN user_like_post ulp on p.id = ulp.post_id
 		LEFT JOIN user_dislike_post udp on p.id = udp.post_id
 		WHERE p.id = $1
-		GROUP BY p.author_id, p.text, p.object, p.date_of_creation`
-	return r.store.db.QueryRow(q, p.ID).Scan(&p.AuthorID, &p.Text, &p.Object,
-		&p.DateCreation, &p.CommentsCount, &p.Likes, &p.Dislikes,
+		GROUP BY p.author_id, u.username, u.userpic, p.text, p.media, p.created`
+	return r.store.db.QueryRow(q, p.ID).Scan(&p.AuthorID, &p.AuthorUsername, &p.AuthorUserpic,
+		&p.Text, &p.Media, &p.Created, &p.CommentCount, &p.LikeCount, &p.DislikeCount,
 	)
 }
 
-func (r *PostRepository) Update(id int, fields []string, values []any) error {
-	var s string
-	for i, field := range fields {
-		value := values[i]
-		if reflect.TypeOf(value).String() == "string" {
-			value = "'" + value.(string) + "'"
-		}
-		s += fmt.Sprintf("%s=%s,", field, value)
-	}
-	s = s[:len(s)-1]
-	q := fmt.Sprintf("UPDATE post SET %s WHERE id = $1", s)
-	_, err := r.store.db.Exec(q, id)
-	return err
-}
+//func (r *PostRepository) Update(id int, fields []string, values []any) error {
+//	var s string
+//	for i, field := range fields {
+//		value := values[i]
+//		if reflect.TypeOf(value).String() == "string" {
+//			value = "'" + value.(string) + "'"
+//		}
+//		s += fmt.Sprintf("%s=%s,", field, value)
+//	}
+//	s = s[:len(s)-1]
+//	q := fmt.Sprintf("UPDATE post SET %s WHERE id = $1", s)
+//	_, err := r.store.db.Exec(q, id)
+//	return err
+//}
 
 func (r *PostRepository) Delete(id int) error {
 	q := `DELETE FROM post WHERE id=$1`
@@ -93,10 +96,6 @@ func (r *PostRepository) Like(userID, postID int) error {
 		return err
 	}
 	return r.UnDislike(userID, postID)
-}
-
-func (r *PostRepository) Feel() {
-
 }
 
 func (r *PostRepository) UnLike(userID, postID int) error {
@@ -127,7 +126,7 @@ func (r *PostRepository) UnFavorite(userID, postID int) error {
 	return r.store.db.QueryRow(q, userID, postID).Err()
 }
 
-func (r *PostRepository) IsExist(id int) (bool, error) {
+func (r *PostRepository) ExistByID(id int) (bool, error) {
 	q := `SELECT EXISTS (SELECT * FROM post WHERE id = $1)`
 	var exist bool
 	err := r.store.db.QueryRow(q, id).Scan(&exist)
@@ -137,7 +136,7 @@ func (r *PostRepository) IsExist(id int) (bool, error) {
 	return exist, nil
 }
 
-func (r *PostRepository) IsOwner(userID, postID int) (bool, error) {
+func (r *PostRepository) IsOwnerByID(userID, postID int) (bool, error) {
 	q := `SELECT EXISTS (SELECT * FROM post WHERE id = $2 AND author_id = $1)`
 	var owner bool
 	if err := r.store.db.QueryRow(q, userID, postID).Scan(&owner); err != nil {
@@ -155,20 +154,29 @@ func (r *PostRepository) LikedOrDislikedOrFavorited(p *model.Post, uID int) erro
 	if err := r.store.db.QueryRow(q, p.ID, uID).Scan(&boolean); err != nil {
 		return nil
 	} else if boolean {
-		p.IsFavorited = true
+		p.Favorited = true
 	}
 	q = "SELECT EXISTS (SELECT * FROM user_like_post WHERE user_id=$1 AND post_id=$2)"
 	if err := r.store.db.QueryRow(q, p.ID, uID).Scan(&boolean); err != nil {
 		return err
 	} else if boolean {
-		p.IsLiked = true
+		p.Liked = true
 		return nil
 	}
 	q = "SELECT EXISTS (SELECT * FROM user_dislike_post WHERE user_id=$1 AND post_id=$2)"
 	if err := r.store.db.QueryRow(q, p.ID, uID).Scan(&boolean); err != nil {
 		return err
 	} else if boolean {
-		p.IsDisliked = true
+		p.Disliked = true
 	}
 	return nil
+}
+
+func (r *PostRepository) Count() (int, error) {
+	q := "SELECT count(*) FROM post"
+	var count int
+	if err := r.store.db.QueryRow(q).Scan(&count); err != nil {
+		return 0, err
+	}
+	return count, nil
 }
