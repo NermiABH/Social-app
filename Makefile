@@ -9,8 +9,10 @@ rebuild:
 stop:
 	docker-compose stop
 migrate:
-	migrate -path migrations -database 'postgres://postgres:pusinu48@:5436/postgres?sslmode=disable' up
+	migrate -path migrations -database 'postgres://postgres:pusinu48@localhost:5432/socialapp' up
 test:
 	go test -v ./...
 start:
 	go build -o social-app ./cmd/main.go && ./social-app
+make db:
+	sudo service postgresql start
