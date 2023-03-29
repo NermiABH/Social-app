@@ -44,7 +44,7 @@ func (r *PostRepository) GetSeveralByAuthor(page int, authorID *int) (model.Post
 	pSlice := make(model.Posts, 0)
 	for rows.Next() {
 		var p model.Post
-		if err = rows.Scan(&p.ID, &p.Text, &p.Media, &p.Created, &p.CommentCount,
+		if err = rows.Scan(&p.ID, &p.AuthorID, &p.AuthorUsername, &p.AuthorUserpic, &p.Text, &p.Media, &p.Created, &p.CommentCount,
 			&p.Liked, &p.Disliked); err != nil {
 			return nil, err
 		}
