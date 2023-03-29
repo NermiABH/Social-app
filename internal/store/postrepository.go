@@ -20,20 +20,21 @@ func (r *PostRepository) Create(p *model.Post) error {
 var LimitPost = 15
 
 func (r *PostRepository) GetSeveralByAuthor(page int, authorID *int) (model.Posts, error) {
-	q := `SELECT p.id, p.text, p.media, p.created,
-		COUNT(c) as comments_count, COUNT(ulp) as likes, COUNT(udp) as dislikes
+	q := `SELECT p.id, u.id, u.username, u.userpic,p.text, p.media, p.created,
+       	COUNT(c) as comments_count, COUNT(ulp) as likes, COUNT(udp) as dislikes
 		FROM post p
-		LEFT JOIN comment c ON p.id = c.post_id
-		LEFT JOIN user_like_post ulp ON p.id = ulp.post_id
-		LEFT JOIN user_dislike_post udp on p.id = udp.post_id 
-		%s
-		GROUP BY p.id, p.text, p.media, p.created
+        LEFT JOIN users u on u.id = p.author_id
+        LEFT JOIN comment c ON p.id = c.post_id
+        LEFT JOIN user_like_post ulp ON p.id = ulp.post_id
+        LEFT JOIN user_dislike_post udp on p.id = udp.post_id
+        %s
+		GROUP BY p.id, p.text, u.id, u.username, u.userpic, p.media, p.created
 		ORDER BY p.created DESC
 		OFFSET $1 LIMIT $2;`
 	if authorID == nil {
 		q = fmt.Sprintf(q, "")
 	} else {
-		q = fmt.Sprintf(q, fmt.Sprintf("WHERE p.authorID=%v", *authorID))
+		q = fmt.Sprintf(q, fmt.Sprintf("WHERE p.author_id=%v", *authorID))
 	}
 	rows, err := r.store.db.Query(q, page*LimitPost, LimitPost)
 	if err != nil {
@@ -43,7 +44,7 @@ func (r *PostRepository) GetSeveralByAuthor(page int, authorID *int) (model.Post
 	pSlice := make(model.Posts, 0)
 	for rows.Next() {
 		var p model.Post
-		if err = rows.Scan(&p.ID, &p.Text, &p.Media, &p.Created, &p.CommentCount,
+		if err = rows.Scan(&p.ID, &p.AuthorID, &p.AuthorUsername, &p.AuthorUserpic, &p.Text, &p.Media, &p.Created, &p.CommentCount,
 			&p.Liked, &p.Disliked); err != nil {
 			return nil, err
 		}
