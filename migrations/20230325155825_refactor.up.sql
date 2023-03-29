@@ -104,3 +104,14 @@ CREATE TABLE user_dislike_comment(
 INSERT INTO users (username, email, password) VALUES ('test1', 'test1@gmail.com', 'pusinu48') returning id;
 INSERT INTO post (author_id, text) VALUES (5, 'fsadfasdf');
 SELECT id FROM post OFFSET 5 LIMIT 5;
+
+SELECT p.id, u.id, u.username, u.userpic,p.text, p.media, p.created,
+       COUNT(c) as comments_count, COUNT(ulp) as likes, COUNT(udp) as dislikes
+FROM post p
+        LEFT JOIN users u on u.id = p.author_id
+         LEFT JOIN comment c ON p.id = c.post_id
+         LEFT JOIN user_like_post ulp ON p.id = ulp.post_id
+         LEFT JOIN user_dislike_post udp on p.id = udp.post_id
+        WHERE p.author_id = 1
+GROUP BY p.id, p.text, u.id, u.username, u.userpic, p.media, p.created
+ORDER BY p.created DESC
